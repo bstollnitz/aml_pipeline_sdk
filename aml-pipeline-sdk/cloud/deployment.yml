@@ -1,0 +1,6 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineDeployment.schema.json
+name: blue
+endpoint_name: endpoint-pipeline-mixed
+model: azureml:model-pipeline-mixed@latest
+instance_type: Standard_NC6s_v3
+instance_count: 1
