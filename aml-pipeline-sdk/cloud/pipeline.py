@@ -4,20 +4,25 @@ import logging
 from pathlib import Path
 from typing import Dict
 
-from azure.ai.ml import Input, MLClient, load_component
+from azure.ai.ml import MLClient, Input, Output
 from azure.ai.ml.constants import AssetTypes
 from azure.ai.ml.dsl import pipeline
-from azure.ai.ml.entities import AmlCompute, Data, Model
+from azure.ai.ml.entities import AmlCompute, Data, Model, Environment, CommandComponent
 from azure.core.exceptions import ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 
 COMPUTE_NAME = "cluster-gpu"
 DATA_NAME = "data-fashion-mnist"
 DATA_VERSION = "1"
-EXPERIMENT_NAME = "aml-pipeline-sdk"
 DATA_PATH = Path(Path(__file__).parent.parent, "data")
-TRAIN_PATH = Path(Path(__file__).parent, "train.yml")
-TEST_PATH = Path(Path(__file__).parent, "test.yml")
+ENVIRONMENT_NAME = "environment-pipeline-sdk"
+CONDA_PATH = Path(Path(__file__).parent, "conda.yml")
+COMPONENT_TRAIN_NAME = "component_pipeline_sdk_train"
+COMPONENT_TRAIN_VERSION = "2"
+COMPONENT_TEST_NAME = "component_pipeline_sdk_test"
+COMPONENT_TEST_VERSION = "2"
+COMPONENT_CODE = Path(Path(__file__).parent.parent, "src")
+EXPERIMENT_NAME = "aml-pipeline-sdk"
 MODEL_NAME = "model-pipeline-sdk"
 MODEL_VERSION = "1"
 
@@ -54,11 +59,32 @@ def main():
         registered_dataset = ml_client.data.get(name=DATA_NAME,
                                                 version=DATA_VERSION)
 
-    # Create the components.
-    train_component = load_component(path=TRAIN_PATH)
-    test_component = load_component(path=TEST_PATH)
+    # Create environment for components. We won't register it.
+    environment = Environment(name=ENVIRONMENT_NAME,
+                              image="mcr.microsoft.com/azureml/" +
+                              "openmpi3.1.2-cuda10.2-cudnn8-ubuntu18.04:latest",
+                              conda_file=CONDA_PATH)
 
-    # TODO: Can we create the components without using YAML files?
+    # Create the components.
+    train_component = CommandComponent(
+        name=COMPONENT_TRAIN_NAME,
+        version=COMPONENT_TRAIN_VERSION,
+        inputs=dict(data_dir=Input(type="uri_folder"),),
+        outputs=dict(model_dir=Output(type="mlflow_model")),
+        environment=environment,
+        code=COMPONENT_CODE,
+        command="python train.py --data_dir ${{inputs.data_dir}} " +
+        "--model_dir ${{outputs.model_dir}}",
+    )
+
+    test_component = CommandComponent(
+        name=COMPONENT_TEST_NAME,
+        version=COMPONENT_TEST_VERSION,
+        inputs=dict(data_dir=Input(type="uri_folder"),
+                    model_dir=Input(type="mlflow_model")),
+        environment=environment,
+        code=COMPONENT_CODE,
+        command="python test.py --model_dir ${{inputs.model_dir}}")
 
     try:
         registered_train_component = ml_client.components.get(
@@ -80,6 +106,8 @@ def main():
               display_name="train_test_fashion_mnist")
     def pipeline_func(data_dir: Input) -> Dict:
         train_job = registered_train_component(data_dir=data_dir)
+        # Ignoring pylint because "test_job" goes in the Studio UI as the name
+        # for the component.
         test_job = registered_test_component(  # pylint: disable=unused-variable
             data_dir=data_dir,
             model_dir=train_job.outputs.model_dir)
