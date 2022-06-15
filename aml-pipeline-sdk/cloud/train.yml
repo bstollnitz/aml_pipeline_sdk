@@ -1,5 +1,5 @@
 $schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
-name: component_pipeline_mixed_train
+name: component_pipeline_sdk_train
 version: 1
 type: command
 
