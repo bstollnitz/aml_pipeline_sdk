@@ -11,6 +11,8 @@ from azure.ai.ml.entities import AmlCompute, Data, Model, Environment, CommandCo
 from azure.core.exceptions import ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 
+from common import MODEL_NAME, MODEL_VERSION
+
 COMPUTE_NAME = "cluster-gpu"
 DATA_NAME = "data-fashion-mnist"
 DATA_VERSION = "1"
@@ -23,8 +25,6 @@ COMPONENT_TEST_NAME = "component_pipeline_sdk_test"
 COMPONENT_TEST_VERSION = "2"
 COMPONENT_CODE = Path(Path(__file__).parent.parent, "src")
 EXPERIMENT_NAME = "aml-pipeline-sdk"
-MODEL_NAME = "model-pipeline-sdk"
-MODEL_VERSION = "1"
 
 
 def main():
@@ -33,6 +33,7 @@ def main():
     ml_client = MLClient.from_config(credential=credential)
 
     # Create the compute cluster.
+    logging.info("Creating the compute cluster...")
     cluster_gpu = AmlCompute(
         name=COMPUTE_NAME,
         type="amlcompute",
@@ -44,6 +45,7 @@ def main():
     ml_client.begin_create_or_update(cluster_gpu)
 
     # Create the data set.
+    logging.info("Creating the data set...")
     try:
         registered_dataset = ml_client.data.get(name=DATA_NAME,
                                                 version=DATA_VERSION)
@@ -66,6 +68,7 @@ def main():
                               conda_file=CONDA_PATH)
 
     # Create the components.
+    logging.info("Creating the components...")
     train_component = CommandComponent(
         name=COMPONENT_TRAIN_NAME,
         version=COMPONENT_TRAIN_VERSION,
@@ -101,6 +104,8 @@ def main():
             test_component)
 
     # Create and submit pipeline.
+    logging.info("Creating the pipeline...")
+
     @pipeline(default_compute=COMPUTE_NAME,
               experiment_name=EXPERIMENT_NAME,
               display_name="train_test_fashion_mnist")
@@ -123,6 +128,7 @@ def main():
     ml_client.jobs.stream(pipeline_job.name)
 
     # Create the model.
+    logging.info("Creating the model...")
     try:
         ml_client.models.get(name=MODEL_NAME, version=MODEL_VERSION)
     except ResourceNotFoundError:
