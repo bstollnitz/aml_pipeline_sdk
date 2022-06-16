@@ -111,8 +111,7 @@ def main():
               display_name="train_test_fashion_mnist")
     def pipeline_func(data_dir: Input) -> Dict:
         train_job = registered_train_component(data_dir=data_dir)
-        # Ignoring pylint because "test_job" goes in the Studio UI as the name
-        # for the component.
+        # Ignoring pylint because "test_job" shows up in the Studio UI.
         test_job = registered_test_component(  # pylint: disable=unused-variable
             data_dir=data_dir,
             model_dir=train_job.outputs.model_dir)
