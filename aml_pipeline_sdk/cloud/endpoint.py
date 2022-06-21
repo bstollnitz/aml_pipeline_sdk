@@ -13,7 +13,7 @@ from common import MODEL_NAME, MODEL_VERSION
 ENDPOINT_NAME = "endpoint-pipeline-sdk"
 DEPLOYMENT_NAME = "blue"
 TEST_DATA_PATH = Path(
-    Path(__file__).parent.parent, "test-data", "images_azureml.json")
+    Path(__file__).parent.parent, "test_data", "images_azureml.json")
 
 
 def main():
@@ -47,7 +47,7 @@ def main():
         deployment = ManagedOnlineDeployment(name=DEPLOYMENT_NAME,
                                              endpoint_name=ENDPOINT_NAME,
                                              model=registered_model,
-                                             instance_type="Standard_NC6s_v3",
+                                             instance_type="Standard_DS4_v2",
                                              instance_count=1)
         ml_client.online_deployments.begin_create_or_update(deployment)
 
