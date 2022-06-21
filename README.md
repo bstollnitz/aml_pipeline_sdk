@@ -68,7 +68,7 @@ Make sure you have a "config.json" file somewhere in the parent folder hierarchy
 {
     "subscription_id": ...,
     "resource_group": ...,
-    "workspace_name": ..."
+    "workspace_name": ...
 }
 ```
 
