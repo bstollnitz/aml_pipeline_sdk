@@ -34,18 +34,18 @@ conda env create -f environment.yml
 Activate conda environment:
 
 ```
-conda activate aml-pipeline-sdk
+conda activate aml_pipeline_sdk
 ```
 
 
 ## Train and predict locally
 
 ```
-cd aml-pipeline-sdk
+cd aml_pipeline_sdk
 ```
 
-* Run train.py by pressing F5.
-* Run test.py the same way.
+* Run src/train.py by pressing F5.
+* Run src/test.py the same way.
 * You can analyze the metrics logged in the "mlruns" directory with the following command:
 
 ```
@@ -55,8 +55,8 @@ mlflow ui
 * Make a local prediction using the trained mlflow model. You can use either csv or json files:
 
 ```
-mlflow models predict --model-uri "model" --input-path "test-data/images.csv" --content-type csv
-mlflow models predict --model-uri "model" --input-path "test-data/images.json" --content-type json
+mlflow models predict --model-uri "model" --input-path "test_data/images.csv" --content-type csv
+mlflow models predict --model-uri "model" --input-path "test_data/images.json" --content-type json
 ```
 
 
@@ -64,6 +64,9 @@ mlflow models predict --model-uri "model" --input-path "test-data/images.json" -
 
 ### Create and run the pipeline
 
+* Run cloud/pipeline-job.py.
+
 
 ### Create and invoke the endpoint
 
+* Run cloud/endpoint.py.

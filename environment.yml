@@ -1,4 +1,4 @@
-name: aml-pipeline-sdk
+name: aml_pipeline_sdk
 channels:
   - anaconda
   - pytorch
@@ -15,4 +15,4 @@ dependencies:
   - mypy==0.910
   - pip==21.2.4
   - pip:
-    - azure-ai-ml==0.1.0b3
+    - azure-ai-ml==0.1.0b4

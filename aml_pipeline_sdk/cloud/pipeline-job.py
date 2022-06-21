@@ -1,19 +1,21 @@
 """Creates and runs an Azure ML pipeline."""
 
 import logging
+import shutil
 from pathlib import Path
 from typing import Dict
 
-from azure.ai.ml import MLClient, Input, Output
+from azure.ai.ml import Input, MLClient, Output
 from azure.ai.ml.constants import AssetTypes
 from azure.ai.ml.dsl import pipeline
-from azure.ai.ml.entities import AmlCompute, Data, Model, Environment, CommandComponent
+from azure.ai.ml.entities import (AmlCompute, CommandComponent, Data,
+                                  Environment, Model)
 from azure.core.exceptions import ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 
 from common import MODEL_NAME, MODEL_VERSION
 
-COMPUTE_NAME = "cluster-gpu"
+COMPUTE_NAME = "cluster-cpu"
 DATA_NAME = "data-fashion-mnist"
 DATA_VERSION = "1"
 DATA_PATH = Path(Path(__file__).parent.parent, "data")
@@ -25,6 +27,7 @@ COMPONENT_TEST_NAME = "component_pipeline_sdk_test"
 COMPONENT_TEST_VERSION = "2"
 COMPONENT_CODE = Path(Path(__file__).parent.parent, "src")
 EXPERIMENT_NAME = "aml-pipeline-sdk"
+MODEL_PATH = Path(Path(__file__).parent.parent)
 
 
 def main():
@@ -34,15 +37,15 @@ def main():
 
     # Create the compute cluster.
     logging.info("Creating the compute cluster...")
-    cluster_gpu = AmlCompute(
+    cluster_cpu = AmlCompute(
         name=COMPUTE_NAME,
         type="amlcompute",
-        size="STANDARD_NC6S_V3",
+        size="Standard_DS4_v2",
         location="westus",
         min_instances=0,
         max_instances=4,
     )
-    ml_client.begin_create_or_update(cluster_gpu)
+    ml_client.begin_create_or_update(cluster_cpu)
 
     # Create the data set.
     logging.info("Creating the data set...")
@@ -64,7 +67,7 @@ def main():
     # Create environment for components. We won't register it.
     environment = Environment(name=ENVIRONMENT_NAME,
                               image="mcr.microsoft.com/azureml/" +
-                              "openmpi3.1.2-cuda10.2-cudnn8-ubuntu18.04:latest",
+                              "openmpi4.1.0-ubuntu20.04:latest",
                               conda_file=CONDA_PATH)
 
     # Create the components.
@@ -139,8 +142,9 @@ def main():
         ml_client.models.create_or_update(model)
 
     # Download the model (this is optional)
-    # Blocked by bug.
-    # ml_client.models.download(name=MODEL_NAME, version=MODEL_VERSION)
+    ml_client.models.download(name=MODEL_NAME,
+                              version=MODEL_VERSION,
+                              download_path=MODEL_PATH)
 
 
 if __name__ == "__main__":
