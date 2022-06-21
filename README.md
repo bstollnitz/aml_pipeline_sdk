@@ -62,6 +62,16 @@ mlflow models predict --model-uri "model" --input-path "test_data/images.json" -
 
 ## Train and deploy in the cloud
 
+Make sure you have a "config.json" file somewhere in the parent folder hierarchy containing your Azure subscription ID, resource group, and workspace:
+
+```
+{
+    "subscription_id": ...,
+    "resource_group": ...,
+    "workspace_name": ..."
+}
+```
+
 ### Create and run the pipeline
 
 * Run cloud/pipeline-job.py.
