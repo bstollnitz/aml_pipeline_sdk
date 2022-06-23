@@ -31,7 +31,6 @@ def main():
     ml_client = MLClient.from_config(credential=credential)
 
     # Create the compute cluster.
-    logging.info("Creating the compute cluster...")
     cluster_cpu = AmlCompute(
         name=COMPUTE_NAME,
         type="amlcompute",
@@ -40,12 +39,9 @@ def main():
         min_instances=0,
         max_instances=4,
     )
-    registered_cluster_cpu = ml_client.begin_create_or_update(cluster_cpu)
-    if registered_cluster_cpu is not None:
-        logging.info("Compute cluster created.")
+    ml_client.begin_create_or_update(cluster_cpu)
 
     # Create the data set.
-    logging.info("Creating the data set...")
     dataset = Data(
         path=DATA_PATH,
         type=AssetTypes.URI_FOLDER,
@@ -53,12 +49,14 @@ def main():
         name=DATA_NAME,
     )
     registered_dataset = ml_client.data.create_or_update(dataset)
-    if registered_dataset is not None:
-        logging.info("Data set with name `%s` and version %s created.",
-                     registered_dataset.name, registered_dataset.version)
+
+    # Create environment for components. We won't register it.
+    environment = Environment(name=ENVIRONMENT_NAME,
+                              image="mcr.microsoft.com/azureml/" +
+                              "openmpi4.1.0-ubuntu20.04:latest",
+                              conda_file=CONDA_PATH)
 
     # Create the components.
-    logging.info("Creating the components...")
     train_component = CommandComponent(
         name=COMPONENT_TRAIN_NAME,
         inputs=dict(data_dir=Input(type="uri_folder"),),
@@ -83,24 +81,7 @@ def main():
     registered_test_component = ml_client.components.create_or_update(
         test_component)
 
-    if registered_train_component is not None:
-        logging.info("Component with name `%s` and version %s created.",
-                     registered_train_component.name,
-                     registered_train_component.version)
-    if registered_test_component is not None:
-        logging.info("Component with name `%s` and version %s created.",
-                     registered_test_component.name,
-                     registered_test_component.version)
-
-    # Create environment for components. We won't register it.
-    environment = Environment(name=ENVIRONMENT_NAME,
-                              image="mcr.microsoft.com/azureml/" +
-                              "openmpi4.1.0-ubuntu20.04:latest",
-                              conda_file=CONDA_PATH)
-
     # Create and submit pipeline.
-    logging.info("Creating the pipeline...")
-
     @pipeline(default_compute=COMPUTE_NAME,
               experiment_name=EXPERIMENT_NAME,
               display_name="train_test_fashion_mnist")
@@ -120,19 +101,13 @@ def main():
 
     pipeline_job = ml_client.jobs.create_or_update(pipeline_job)
     ml_client.jobs.stream(pipeline_job.name)
-    logging.info("Pipeline with name `%s` completed.", pipeline_job.name)
 
     # Create the model.
-    logging.info("Creating the model...")
     model_path = f"azureml://jobs/{pipeline_job.name}/outputs/model_dir"
     model = Model(path=model_path,
                   name=MODEL_NAME,
                   type=AssetTypes.MLFLOW_MODEL)
     registered_model = ml_client.models.create_or_update(model)
-
-    if registered_model is not None:
-        logging.info(f"Model with name `{registered_model.name}` " +
-                     f"and version {registered_model.version} created.")
 
     # Download the model (this is optional).
     ml_client.models.download(name=MODEL_NAME,
