@@ -9,24 +9,20 @@ from azure.ai.ml.constants import AssetTypes
 from azure.ai.ml.dsl import pipeline
 from azure.ai.ml.entities import (AmlCompute, CommandComponent, Data,
                                   Environment, Model)
-from azure.core.exceptions import ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 
 from common import MODEL_NAME
 
 COMPUTE_NAME = "cluster-cpu"
 DATA_NAME = "data-fashion-mnist"
-DATA_VERSION = "1"
 DATA_PATH = Path(Path(__file__).parent.parent, "data")
+COMPONENT_TRAIN_NAME = "component_pipeline_sdk_train"
+COMPONENT_TEST_NAME = "component_pipeline_sdk_test"
+COMPONENT_CODE = Path(Path(__file__).parent.parent, "src")
 ENVIRONMENT_NAME = "environment-pipeline-sdk"
 CONDA_PATH = Path(Path(__file__).parent, "conda.yml")
-COMPONENT_TRAIN_NAME = "component_pipeline_sdk_train"
-COMPONENT_TRAIN_VERSION = "2"
-COMPONENT_TEST_NAME = "component_pipeline_sdk_test"
-COMPONENT_TEST_VERSION = "2"
-COMPONENT_CODE = Path(Path(__file__).parent.parent, "src")
 EXPERIMENT_NAME = "aml-pipeline-sdk"
-MODEL_PATH = Path(Path(__file__).parent.parent)
+DOWNLOADED_MODEL_PATH = Path(Path(__file__).parent.parent)
 
 
 def main():
@@ -44,36 +40,27 @@ def main():
         min_instances=0,
         max_instances=4,
     )
-    ml_client.begin_create_or_update(cluster_cpu)
+    registered_cluster_cpu = ml_client.begin_create_or_update(cluster_cpu)
+    if registered_cluster_cpu is not None:
+        logging.info("Compute cluster created.")
 
     # Create the data set.
     logging.info("Creating the data set...")
-    try:
-        registered_dataset = ml_client.data.get(name=DATA_NAME,
-                                                version=DATA_VERSION)
-    except ResourceNotFoundError:
-        dataset = Data(
-            path=DATA_PATH,
-            type=AssetTypes.URI_FOLDER,
-            description="Fashion MNIST data set",
-            name=DATA_NAME,
-            version=DATA_VERSION,
-        )
-        ml_client.data.create_or_update(dataset)
-        registered_dataset = ml_client.data.get(name=DATA_NAME,
-                                                version=DATA_VERSION)
-
-    # Create environment for components. We won't register it.
-    environment = Environment(name=ENVIRONMENT_NAME,
-                              image="mcr.microsoft.com/azureml/" +
-                              "openmpi4.1.0-ubuntu20.04:latest",
-                              conda_file=CONDA_PATH)
+    dataset = Data(
+        path=DATA_PATH,
+        type=AssetTypes.URI_FOLDER,
+        description="Fashion MNIST data set",
+        name=DATA_NAME,
+    )
+    registered_dataset = ml_client.data.create_or_update(dataset)
+    if registered_dataset is not None:
+        logging.info("Data set with name `%s` and version %s created.",
+                     registered_dataset.name, registered_dataset.version)
 
     # Create the components.
     logging.info("Creating the components...")
     train_component = CommandComponent(
         name=COMPONENT_TRAIN_NAME,
-        version=COMPONENT_TRAIN_VERSION,
         inputs=dict(data_dir=Input(type="uri_folder"),),
         outputs=dict(model_dir=Output(type="mlflow_model")),
         environment=environment,
@@ -84,26 +71,32 @@ def main():
 
     test_component = CommandComponent(
         name=COMPONENT_TEST_NAME,
-        version=COMPONENT_TEST_VERSION,
         inputs=dict(data_dir=Input(type="uri_folder"),
                     model_dir=Input(type="mlflow_model")),
         environment=environment,
         code=COMPONENT_CODE,
         command="python test.py --model_dir ${{inputs.model_dir}}")
 
-    try:
-        registered_train_component = ml_client.components.get(
-            name=train_component.name, version=train_component.version)
-    except ResourceNotFoundError:
-        registered_train_component = ml_client.components.create_or_update(
-            train_component)
+    registered_train_component = ml_client.components.create_or_update(
+        train_component)
 
-    try:
-        registered_test_component = ml_client.components.get(
-            name=test_component.name, version=test_component.version)
-    except ResourceNotFoundError:
-        registered_test_component = ml_client.components.create_or_update(
-            test_component)
+    registered_test_component = ml_client.components.create_or_update(
+        test_component)
+
+    if registered_train_component is not None:
+        logging.info("Component with name `%s` and version %s created.",
+                     registered_train_component.name,
+                     registered_train_component.version)
+    if registered_test_component is not None:
+        logging.info("Component with name `%s` and version %s created.",
+                     registered_test_component.name,
+                     registered_test_component.version)
+
+    # Create environment for components. We won't register it.
+    environment = Environment(name=ENVIRONMENT_NAME,
+                              image="mcr.microsoft.com/azureml/" +
+                              "openmpi4.1.0-ubuntu20.04:latest",
+                              conda_file=CONDA_PATH)
 
     # Create and submit pipeline.
     logging.info("Creating the pipeline...")
@@ -127,6 +120,7 @@ def main():
 
     pipeline_job = ml_client.jobs.create_or_update(pipeline_job)
     ml_client.jobs.stream(pipeline_job.name)
+    logging.info("Pipeline with name `%s` completed.", pipeline_job.name)
 
     # Create the model.
     logging.info("Creating the model...")
@@ -136,9 +130,13 @@ def main():
                   type=AssetTypes.MLFLOW_MODEL)
     registered_model = ml_client.models.create_or_update(model)
 
-    # Download the model (this is optional)
+    if registered_model is not None:
+        logging.info(f"Model with name `{registered_model.name}` " +
+                     f"and version {registered_model.version} created.")
+
+    # Download the model (this is optional).
     ml_client.models.download(name=MODEL_NAME,
-                              download_path=MODEL_PATH,
+                              download_path=DOWNLOADED_MODEL_PATH,
                               version=registered_model.version)
 
 
