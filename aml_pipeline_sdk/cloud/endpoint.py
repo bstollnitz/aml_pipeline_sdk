@@ -8,12 +8,15 @@ from azure.ai.ml.entities import ManagedOnlineDeployment, ManagedOnlineEndpoint
 from azure.core.exceptions import ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 
-from common import MODEL_NAME, MODEL_VERSION
+from common import MODEL_NAME
 
 ENDPOINT_NAME = "endpoint-pipeline-sdk"
 DEPLOYMENT_NAME = "blue"
 TEST_DATA_PATH = Path(
     Path(__file__).parent.parent, "test_data", "images_azureml.json")
+
+# TODO: Need to remove this.
+MODEL_VERSION = "6"
 
 
 def main():

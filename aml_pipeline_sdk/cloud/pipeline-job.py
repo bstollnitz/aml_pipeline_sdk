@@ -1,7 +1,6 @@
 """Creates and runs an Azure ML pipeline."""
 
 import logging
-import shutil
 from pathlib import Path
 from typing import Dict
 
@@ -13,7 +12,7 @@ from azure.ai.ml.entities import (AmlCompute, CommandComponent, Data,
 from azure.core.exceptions import ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 
-from common import MODEL_NAME, MODEL_VERSION
+from common import MODEL_NAME
 
 COMPUTE_NAME = "cluster-cpu"
 DATA_NAME = "data-fashion-mnist"
@@ -131,20 +130,16 @@ def main():
 
     # Create the model.
     logging.info("Creating the model...")
-    try:
-        ml_client.models.get(name=MODEL_NAME, version=MODEL_VERSION)
-    except ResourceNotFoundError:
-        model_path = f"azureml://jobs/{pipeline_job.name}/outputs/model_dir"
-        model = Model(path=model_path,
-                      name=MODEL_NAME,
-                      version=MODEL_VERSION,
-                      type=AssetTypes.MLFLOW_MODEL)
-        ml_client.models.create_or_update(model)
+    model_path = f"azureml://jobs/{pipeline_job.name}/outputs/model_dir"
+    model = Model(path=model_path,
+                  name=MODEL_NAME,
+                  type=AssetTypes.MLFLOW_MODEL)
+    registered_model = ml_client.models.create_or_update(model)
 
     # Download the model (this is optional)
     ml_client.models.download(name=MODEL_NAME,
-                              version=MODEL_VERSION,
-                              download_path=MODEL_PATH)
+                              download_path=MODEL_PATH,
+                              version=registered_model.version)
 
 
 if __name__ == "__main__":
