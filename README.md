@@ -1,4 +1,4 @@
-# How to create Azure ML resources using the SDK
+# How to train using an Azure ML pipeline, using the SDK
 
 This project shows how to train a Fashion MNIST model using an Azure ML pipeline, and how to deploy it using an online managed endpoint. It demonstrates how to create Azure ML resources using the Python SDK, and it uses MLflow for tracking and model representation.
 
