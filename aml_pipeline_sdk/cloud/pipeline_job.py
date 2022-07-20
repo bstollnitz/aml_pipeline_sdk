@@ -43,10 +43,10 @@ def main():
 
     # Create the data set.
     dataset = Data(
+        name=DATA_NAME,
+        description="Fashion MNIST data set",
         path=DATA_PATH,
         type=AssetTypes.URI_FOLDER,
-        description="Fashion MNIST data set",
-        name=DATA_NAME,
     )
     registered_dataset = ml_client.data.create_or_update(dataset)
 
@@ -82,9 +82,7 @@ def main():
         test_component)
 
     # Create and submit pipeline.
-    @pipeline(default_compute=COMPUTE_NAME,
-              experiment_name=EXPERIMENT_NAME,
-              display_name="train_test_fashion_mnist")
+    @pipeline(experiment_name=EXPERIMENT_NAME, default_compute=COMPUTE_NAME)
     def pipeline_func(data_dir: Input) -> Dict:
         train_job = registered_train_component(data_dir=data_dir)
         # Ignoring pylint because "test_job" shows up in the Studio UI.
@@ -104,8 +102,8 @@ def main():
 
     # Create the model.
     model_path = f"azureml://jobs/{pipeline_job.name}/outputs/model_dir"
-    model = Model(path=model_path,
-                  name=MODEL_NAME,
+    model = Model(name=MODEL_NAME,
+                  path=model_path,
                   type=AssetTypes.MLFLOW_MODEL)
     registered_model = ml_client.models.create_or_update(model)
 

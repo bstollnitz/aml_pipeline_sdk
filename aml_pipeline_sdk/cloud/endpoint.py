@@ -7,9 +7,8 @@ from azure.ai.ml import MLClient
 from azure.ai.ml.entities import ManagedOnlineDeployment, ManagedOnlineEndpoint
 from azure.identity import DefaultAzureCredential
 
-from common import MODEL_NAME
+from common import MODEL_NAME, ENDPOINT_NAME
 
-ENDPOINT_NAME = "endpoint-pipeline-sdk"
 DEPLOYMENT_NAME = "blue"
 TEST_DATA_PATH = Path(
     Path(__file__).parent.parent, "test_data", "images_azureml.json")
@@ -45,7 +44,6 @@ def main():
 
     # Invoke the endpoint.
     result = ml_client.online_endpoints.invoke(endpoint_name=ENDPOINT_NAME,
-                                               deployment_name=DEPLOYMENT_NAME,
                                                request_file=TEST_DATA_PATH)
     logging.info(result)
 

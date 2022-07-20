@@ -74,9 +74,13 @@ Make sure you have a "config.json" file somewhere in the parent folder hierarchy
 
 ### Create and run the pipeline
 
-* Run cloud/pipeline-job.py.
+Run cloud/pipeline-job.py.
 
 
 ### Create and invoke the endpoint
 
-* Run cloud/endpoint.py.
+Run cloud/endpoint.py.
+
+### Clean up the endpoint
+
+Once you're done working with the endpoint, you can clean it up to avoid getting charged by running cloud/delete_endpoint.py.
