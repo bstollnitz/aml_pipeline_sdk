@@ -21,7 +21,7 @@ COMPONENT_TEST_NAME = "component_pipeline_sdk_test"
 COMPONENT_CODE = Path(Path(__file__).parent.parent, "src")
 ENVIRONMENT_NAME = "environment-pipeline-sdk"
 CONDA_PATH = Path(Path(__file__).parent, "conda.yml")
-EXPERIMENT_NAME = "aml-pipeline-sdk"
+EXPERIMENT_NAME = "aml_pipeline_sdk"
 DOWNLOADED_MODEL_PATH = Path(Path(__file__).parent.parent)
 
 
