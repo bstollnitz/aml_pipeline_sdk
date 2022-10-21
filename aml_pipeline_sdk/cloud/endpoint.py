@@ -7,14 +7,14 @@ from azure.ai.ml import MLClient
 from azure.ai.ml.entities import ManagedOnlineDeployment, ManagedOnlineEndpoint
 from azure.identity import DefaultAzureCredential
 
-from common import MODEL_NAME, ENDPOINT_NAME
+from common_cloud import MODEL_NAME, ENDPOINT_NAME
 
 DEPLOYMENT_NAME = "blue"
 TEST_DATA_PATH = Path(
     Path(__file__).parent.parent, "test_data", "images_azureml.json")
 
 
-def main():
+def main() -> None:
     logging.basicConfig(level=logging.INFO)
     credential = DefaultAzureCredential()
     ml_client = MLClient.from_config(credential=credential)

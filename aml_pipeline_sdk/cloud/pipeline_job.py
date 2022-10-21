@@ -2,7 +2,6 @@
 
 import logging
 from pathlib import Path
-from typing import Dict
 
 from azure.ai.ml import Input, MLClient, Output
 from azure.ai.ml.constants import AssetTypes
@@ -11,7 +10,7 @@ from azure.ai.ml.entities import (AmlCompute, CommandComponent, Data,
                                   Environment, Model)
 from azure.identity import DefaultAzureCredential
 
-from common import MODEL_NAME
+from common_cloud import MODEL_NAME
 
 COMPUTE_NAME = "cluster-cpu"
 DATA_NAME = "data-fashion-mnist"
@@ -25,7 +24,7 @@ EXPERIMENT_NAME = "aml_pipeline_sdk"
 DOWNLOADED_MODEL_PATH = Path(Path(__file__).parent.parent)
 
 
-def main():
+def main() -> None:
     logging.basicConfig(level=logging.INFO)
     credential = DefaultAzureCredential()
     ml_client = MLClient.from_config(credential=credential)
@@ -45,7 +44,7 @@ def main():
     dataset = Data(
         name=DATA_NAME,
         description="Fashion MNIST data set",
-        path=DATA_PATH,
+        path=DATA_PATH.as_posix(),
         type=AssetTypes.URI_FOLDER,
     )
     registered_dataset = ml_client.data.create_or_update(dataset)
@@ -62,7 +61,7 @@ def main():
         inputs=dict(data_dir=Input(type="uri_folder"),),
         outputs=dict(model_dir=Output(type="mlflow_model")),
         environment=environment,
-        code=COMPONENT_CODE,
+        code=COMPONENT_CODE.as_posix(),
         command="python train.py --data_dir ${{inputs.data_dir}} " +
         "--model_dir ${{outputs.model_dir}}",
     )
@@ -72,7 +71,7 @@ def main():
         inputs=dict(data_dir=Input(type="uri_folder"),
                     model_dir=Input(type="mlflow_model")),
         environment=environment,
-        code=COMPONENT_CODE,
+        code=COMPONENT_CODE.as_posix(),
         command="python test.py --model_dir ${{inputs.model_dir}}")
 
     registered_train_component = ml_client.components.create_or_update(
@@ -83,7 +82,7 @@ def main():
 
     # Create and submit pipeline.
     @pipeline(experiment_name=EXPERIMENT_NAME, default_compute=COMPUTE_NAME)
-    def pipeline_func(data_dir: Input) -> Dict:
+    def pipeline_func(data_dir: Input) -> dict[str, str]:
         train_job = registered_train_component(data_dir=data_dir)
         # Ignoring pylint because "test_job" shows up in the Studio UI.
         test_job = registered_test_component(  # pylint: disable=unused-variable
