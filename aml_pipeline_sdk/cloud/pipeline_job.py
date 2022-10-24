@@ -10,7 +10,7 @@ from azure.ai.ml.entities import (AmlCompute, CommandComponent, Data,
                                   Environment, Model)
 from azure.identity import DefaultAzureCredential
 
-from common_cloud import MODEL_NAME
+from .common import MODEL_NAME
 
 COMPUTE_NAME = "cluster-cpu"
 DATA_NAME = "data-fashion-mnist"
