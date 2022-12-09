@@ -50,8 +50,8 @@ mlflow ui
 
 ```
 cd aml_pipeline_sdk
-mlflow models predict --model-uri "model" --input-path "test_data/images.csv" --content-type csv
-mlflow models predict --model-uri "model" --input-path "test_data/images.json" --content-type json
+mlflow models predict --model-uri "model" --input-path "test_data/images.csv" --content-type csv --env-manager local
+mlflow models predict --model-uri "model" --input-path "test_data/images.json" --content-type json --env-manager local
 ```
 
 

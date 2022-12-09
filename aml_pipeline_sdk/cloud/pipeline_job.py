@@ -3,7 +3,7 @@
 import logging
 from pathlib import Path
 
-from azure.ai.ml import Input, MLClient, Output
+from azure.ai.ml import MLClient, Input, Output
 from azure.ai.ml.constants import AssetTypes
 from azure.ai.ml.dsl import pipeline
 from azure.ai.ml.entities import (AmlCompute, CommandComponent, Data,
